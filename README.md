@@ -1,2 +1,1 @@
-# crossplane-e2e-fleet
-Crossplane End-to-End Fleet
+# Crossplane End-to-End Fleet
