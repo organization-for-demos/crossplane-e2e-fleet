@@ -1,0 +1,36 @@
+name: Validate Flux Manifests
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      # NOTE: We intentionally avoid `actions/checkout` here.
+      # Some GitHub/Enterprise setups restrict Marketplace actions, which can produce:
+      # "Unable to resolve action `actions/checkout@v4`".
+      - name: Checkout repository (no Marketplace actions)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init
+          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+          git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags --prune --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Install Flux CLI
+        run: |
+          curl -s https://fluxcd.io/install.sh | sudo bash
+
+      - name: Validate Flux install manifest (client-side)
+        run: |
+          flux install --export > /tmp/flux-install.yaml
+          kubectl apply --dry-run=client -f /tmp/flux-install.yaml
+
+      - name: Validate repository Flux resources (client-side)
+        run: |
+          # Adjust paths if your Flux manifests live elsewhere.
+          kubectl apply --dry-run=client -f flux/clusters/dev/ || true
