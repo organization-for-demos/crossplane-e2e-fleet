@@ -1,0 +1,18 @@
+name: Validate Compositions (crossplane render)
+on: [push, pull_request]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Crossplane CLI
+        run: |
+          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh" | sh
+          sudo mv crossplane /usr/local/bin/
+
+      - name: Render all APIs
+        run: |
+          chmod +x scripts/render-all.sh
+          ./scripts/render-all.sh
